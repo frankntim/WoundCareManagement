@@ -82,9 +82,7 @@ log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step ,datetime.now
 
 
 def load_data():
-    WC = pyodbc.connect('Trusted_Connection=yes', 
-                         driver = '{ODBC Driver 17 for SQL Server}',
-                         server = 'TPS-PRD-WCARE1')
+    WC = pyodbc.connect(CONNECTION_STRING)
 
     sql_query = pd.read_sql_query('''
                                 SELECT
@@ -1040,9 +1038,7 @@ try:
     Activity = 'Connection Established'
     Step = Step + 1
 
-    cnxn = pyodbc.connect('Trusted_Connection=yes', 
-                         driver = '{ODBC Driver 17 for SQL Server}',
-                         server = 'TPS-PRD-DS06'
+    cnxn = pyodbc.connect(CONNECTION_STRING2
                          )
     print(Activity, current_dateTime)
     log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step, datetime.now()]
