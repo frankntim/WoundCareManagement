@@ -314,12 +314,10 @@ def get_training_feature_library_top_level_category(server_name,
     
     
     
-    #connection = pyodbc.connect(
-    #    "DRIVER={ODBC Driver 18 for SQL Server};SERVER=tps-prd-ds02.turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
-     #)
+   
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     toplevelcategories_df = get_categorical_levels(connection, 'Top_Level_Category')
@@ -410,7 +408,7 @@ def get_training_feature_library_category(server_name,
     '''
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     categories_df = get_categorical_levels(connection, 'Category')
@@ -530,7 +528,7 @@ def get_training_feature_library_subcategory(server_name,
     '''
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     categories_df = get_categorical_levels(connection, 'SubCategory')
@@ -656,7 +654,7 @@ def get_training_feature_library_placeofservice(server_name,
                                             ):
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     
@@ -757,7 +755,7 @@ def get_training_feature_library_cpt3(server_name,
                             ):
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     cpt3_df = get_cpt3_categorical_levels(connection)
@@ -1186,7 +1184,7 @@ def get_training_feature_library_chronic_disease(server_name,
                                             ):
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     chronic_categories_df = get_chronic_categorical_levels()
@@ -1232,7 +1230,7 @@ def get_training_feature_library_totalpaid(server_name,
     '''
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_query = pd.read_sql_query(f"""
@@ -1281,7 +1279,7 @@ def get_training_feature_library_HOSP_visits(server_name, client_name, table_nam
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1358,7 +1356,7 @@ def get_training_feature_library_EM_visits(server_name, client_name, table_name,
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1434,7 +1432,7 @@ def get_training_feature_library_mbr_demographics(server_name, client_name, tabl
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_query = pd.read_sql_query(f"""
@@ -1499,7 +1497,7 @@ def get_training_feature_library_ER_visits(server_name, client_name,table_name, 
     '''
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1579,7 +1577,7 @@ def get_training_feature_library_SNF_visits(server_name, client_name,table_name,
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1652,7 +1650,7 @@ def get_training_feature_library_HomeCare_visits(server_name, client_name,table_
     '''
     
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1726,7 +1724,7 @@ def get_training_feature_library_OfficeVisit(server_name, client_name,table_name
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1800,7 +1798,7 @@ def get_training_feature_library_OutPatientHospital(server_name, client_name,tab
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1877,7 +1875,7 @@ def get_training_feature_library_ER_Related(server_name, client_name,table_name,
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -1953,7 +1951,7 @@ def get_training_feature_library_Behavioral_Health(server_name, client_name,tabl
                                     
     '''
     connection = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER="+server_name+".turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     
     sql_all_members = pd.read_sql_query(f""" 
@@ -2054,7 +2052,7 @@ def upload_logging_data(logging_df):
     logging_df = logging_df[["Name","Type","Step", "Activity", "TimeStamp","Duration" ,"Status", "Msg"]]
     
     cnxn = pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};SERVER=tps-prd-ds06.turningpoint-healthcare.com;UID=ds_sql;PWD=KuXh*V87tg0u;ENCRYPT=no"
+        CONNECTION_STRING
      )
     log_cursor = cnxn.cursor()
     log_cursor.fast_executemany = True
@@ -2637,7 +2635,7 @@ def run_training_feature_library(server_name, client_name, table_name,start_date
 
 if __name__ == '__main__':
     
-  
+   # run this code like this
     #%run final_feature_library_utilities_eds01.py  --server_name TPS-PRD-DS02  --client_name Centene  --table_name DS_314B   --start_date 2022-07-01 --end_date 2022-07-30
     
     
