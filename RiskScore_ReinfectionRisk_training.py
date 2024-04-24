@@ -8,44 +8,10 @@
 #        Log errors into ERROR table
 
 
-ID = 10
-Step = 0
-Name = "RiskScore-ReinfectionRisk-Train"
-
-ERROR_TYPE_LIST = ['Start',
-                  'Macros Definition Failed',
-                  'Config-Parameters Failed to Load',
-                  'Connection to Database Failed',
-                  'Failed to load Train/Validation Data',
-                   'Failed to transform Train/Validation Data',
-                  'Failed to Generate Train/Validation Features',
-                  'Failed to Train w/ Tree-Based Models:',
-                  'Failed to Train w/ Linear Models : Logistic Regression',
-                   'Table Insertion Failed'
-                 ]
-
-
-# In[9]:
-
 
 import pandas as pd
 import os
 from datetime import datetime
-current_dateTime = datetime.now()
-print('Start ', current_dateTime)
-
-Step = Step + 1
-Activity = 'Start'
-log = pd.DataFrame(columns=['Name','ID','Type','Value','Step','TimeStamp'])
-log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step,datetime.now()] 
-
-
-
-# <h3>Load Packages</h3>
-
-# In[10]:
-
-
 import pyodbc
 import pandas as pd
 import numpy as np
@@ -68,21 +34,13 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-current_dateTime = datetime.now()
-Step = Step +  1
-Activity = 'Packages Loaded'
-print(Activity, current_dateTime)
-log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step ,datetime.now()] 
 
 
-
-# <h3>Define Macros</h3>
-
-# In[11]:
-
-
-def load_data():
-    WC = pyodbc.connect(CONNECTION_STRING)
+def load_data(connection_string):
+  '''
+  This function loads data from a specific table through a dedicated connection string
+  '''
+    WC = pyodbc.connect(connection_string)
 
     sql_query = pd.read_sql_query('''
                                 SELECT
@@ -141,6 +99,9 @@ def load_data():
 
 
 def age_category(age):
+  '''
+  This function bins  the ages into 4 categories
+  '''
     if age < 18:
         return 1
     if 18 <= age < 48:
@@ -152,10 +113,13 @@ def age_category(age):
 
 
 def to_1D(series):
- return pd.Series([x for _list in series for x in _list])
+  return pd.Series([x for _list in series for x in _list])
 
 
 def get_item_frequency_in_counts(item_lists, unique_items, prefix = ''):
+  '''
+  Generates counts of categorical list items in dataframe cell as one-hot encoded columns
+  '''
 # Create empty dict
     count_dict = {}
     # Make sure there are no Nones in item_list
@@ -176,6 +140,9 @@ def get_item_frequency_in_counts(item_lists, unique_items, prefix = ''):
 
 
 def get_item_frequency_in_bool(item_lists, unique_items, prefix = ''):
+  '''
+  Generates unique counts of categorical list items in dataframe cell as one-hot encoded columns
+  '''
 # Create empty dict
     bool_dict = {}
     # Make sure there are no Nones in item list
@@ -195,6 +162,9 @@ def get_item_frequency_in_bool(item_lists, unique_items, prefix = ''):
     return df
 
 def drop_out_adjustment_claims(member_analytic_dataset_df):
+  '''
+  This function drops certain claims whose allowed amount are negative
+  '''
     # Select all claims where adjustment  = 1
     adjustment_one_df = member_analytic_dataset_df[member_analytic_dataset_df['Adjustment']==1][['TPSClaimID','AllowedAmount','MemberName','AdmissionType','AddedDTM']]
     adjustment_one_df['AllowedAmount'] = abs(adjustment_one_df['AllowedAmount'])
@@ -229,6 +199,9 @@ def drop_out_adjustment_claims(member_analytic_dataset_df):
 
 
 def dq_training_dataset(training_dataset_df):
+  '''
+  This function performs data quality check 
+  '''
     # DQ Check 1: Replace all null dates in Admission with NaN and fill it with ServiceDates
 
     print(f'initial dimension of dataset: {training_dataset_df.shape}')
@@ -270,7 +243,9 @@ def select_cutoff_variation(dataset_df, column_name ,list_size = 3000):
 
 
 def get_aggregated_member_from_claim_dataset(dataset_df):
-    
+    '''
+    Since a member can have multiple claims, this function aggregate all the member's claims
+    '''
     
     
     categorical_columns = ['PlaceOfServiceCode',
@@ -303,8 +278,7 @@ def get_aggregated_member_from_claim_dataset(dataset_df):
     for cat in categorical_columns:
         dataset_df[cat]= dataset_df[cat].astype(str)
         
-    # Reencode in training but not in master here
-    # TODO:
+    
     
     year_list = list(dataset_df['ServiceYear'].unique())
     year_list = sorted(year_list)
@@ -369,6 +343,9 @@ def generate_model_training_set_from_encodings(dataset_df,
                                               standardized_encoding_columns,
                                               target_variable = "ReinfectionEpisode",
                                               additional_columns = ['EpisodeLOS','AvgEpisodeLength']):
+    '''
+    One hot encoding dataset is generated for each member year
+    '''
     
     dataset_df['ServiceYear'] = dataset_df['ServiceYear'].astype(int)
     year_list = list(dataset_df['ServiceYear'].unique())
@@ -576,74 +553,7 @@ def parse_encoding_into_standardized_column(dataset_df):
 
 
 
-def generate_model_training_set_from_encodings(dataset_df, 
-                                              standard_encoding_dataset_df, 
-                                              categorical_cols,
-                                              categorical_col_names,
-                                              standardized_encoding_columns,
-                                              count_encoding = True,
-                                               ):
-    
-    dataset_df['ServiceYear'] = dataset_df['ServiceYear'].astype(int)
-    year_list = list(dataset_df['ServiceYear'].unique())
-    year_list = sorted(year_list)
-    
-    
-    key_columns = ['TPSMemberID','MemberYearId','AllowedAmount','ServiceYear']
-       
 
-            
-    member_modeling_list = []   
-    
-    for year in year_list:
-
-        member_per_year = dataset_df.query('ServiceYear == @year')
-        member_modeling_df = pd.DataFrame()
-
-        if count_encoding:
-             
-            for cat_col, cat_name in zip(categorical_cols,categorical_col_names):
-
-                unique_codes = list(standard_encoding_dataset_df[cat_col].values[0])
-
-                codes_df = get_item_frequency_in_counts(member_per_year[cat_col], 
-                                                                                 unique_codes, 
-                                                                                 prefix=cat_name) 
-                member_modeling_df = pd.concat([member_modeling_df,codes_df], axis = 1)
-                
-        else:
-            
-            # Encode in presence with bool
-            for cat_col, cat_name in zip(categorical_cols,categorical_col_names):
-
-                unique_codes = list(standard_encoding_dataset_df[cat_col].values[0])
-
-                codes_df = get_item_frequency_in_bool(member_per_year[cat_col], 
-                                                                             unique_codes, 
-                                                                             prefix=cat_name)
-                member_modeling_df = pd.concat([member_modeling_df,codes_df], axis = 1)
-
-            
-
-        index_df = member_per_year[key_columns]
-        
-        index_df = index_df.reset_index(drop=True)
-        # Standardize the columns
-        member_modeling_df = member_modeling_df[standardized_encoding_columns]
-        member_modeling_df = member_modeling_df.reset_index(drop=True)
-        
-        member_modeling_df = pd.concat([index_df,member_modeling_df], axis=1)
-        member_modeling_list.append(member_modeling_df)
-
-    member_modeling_list_df = pd.concat(member_modeling_list, axis = 0)
-    
-    member_modeling_list_df = member_modeling_list_df.drop_duplicates()
-    
-    # drop these columns
-    member_modeling_list_df = member_modeling_list_df.drop(['TPSMemberID','ServiceYear'], axis = 1)
-    
-    
-    return member_modeling_list_df
 
 
 
@@ -799,22 +709,22 @@ def train_evaluate_lightgbm(training_data_df, train_target, validation_data_df, 
 
     cv_results = cross_validate(lgb_classifier,  training_X, train_target, cv=5, scoring=scoring)
 
-    #f1_score_df = pd.DataFrame(cv_results['test_f1_macro'], columns=['F1-score'])
-    #f1_score_df.plot.barh(rot=0, color='black')
-    #display(f1_score_df)
+    f1_score_df = pd.DataFrame(cv_results['test_f1_macro'], columns=['F1-score'])
+    f1_score_df.plot.barh(rot=0, color='black')
+    display(f1_score_df)
 
     lgb_classifier.fit(training_X, train_target)
-    #feature_importance(lgb_classifier, 
-    #                   training_data_df)
+    feature_importance(lgb_classifier, 
+                       training_data_df)
     
     y_predict_lgb = evaluate_on_validation(lgb_classifier, validation_data_df, validation_target)
     
-    #plt.figure(figsize=(10,8))
-    #explainer = shap.TreeExplainer(lgb_classifier)
-    #importance = training_X.copy()
-    #importance_with_col_names = training_data_df.copy()
-    #shap_values = explainer.shap_values(importance)
-    #shap.summary_plot(shap_values, importance_with_col_names,plot_type='bar')
+    plt.figure(figsize=(10,8))
+    explainer = shap.TreeExplainer(lgb_classifier)
+    importance = training_X.copy()
+    importance_with_col_names = training_data_df.copy()
+    shap_values = explainer.shap_values(importance)
+    shap.summary_plot(shap_values, importance_with_col_names,plot_type='bar')
     
     return 
 
@@ -835,22 +745,22 @@ def train_evaluate_catboost(training_data_df, train_target, validation_data_df, 
 
     cv_results = cross_validate(cat_classifier,  training_X, train_target, cv=5, scoring=scoring)
 
-    #f1_score_df = pd.DataFrame(cv_results['test_f1_macro'], columns=['F1-score'])
-    #f1_score_df.plot.barh(rot=0, color='black')
-    #display(f1_score_df)
+    f1_score_df = pd.DataFrame(cv_results['test_f1_macro'], columns=['F1-score'])
+    f1_score_df.plot.barh(rot=0, color='black')
+    display(f1_score_df)
 
     cat_classifier.fit(training_X, train_target)
     
-    #importance_df = feature_importance(cat_classifier, 
-    #                                   training_data_df)
+    importance_df = feature_importance(cat_classifier, 
+                                       training_data_df)
     y_predict_cat = evaluate_on_validation(cat_classifier, validation_data_df, validation_target)
     
-    #plt.figure(figsize=(10,8))
-    #explainer = shap.TreeExplainer(cat_classifier)
-    #importance = training_X.copy()
-    #importance_with_col_names = training_data_df.copy()
-    #shap_values = explainer.shap_values(importance)
-    #shap.summary_plot(shap_values, importance_with_col_names,plot_type='bar')
+    plt.figure(figsize=(10,8))
+    explainer = shap.TreeExplainer(cat_classifier)
+    importance = training_X.copy()
+    importance_with_col_names = training_data_df.copy()
+    shap_values = explainer.shap_values(importance)
+    shap.summary_plot(shap_values, importance_with_col_names,plot_type='bar')
     
     return 
  
@@ -938,33 +848,32 @@ def plot_roc_curves(data_list,
     return
 
 
+### Parameters
+ID = 10
+Step = 0
+Name = "RiskScore-ReinfectionRisk-Train"
 
-
+ERROR_TYPE_LIST = ['Start',
+                  'Macros Definition Failed',
+                  'Config-Parameters Failed to Load',
+                  'Connection to Database Failed',
+                  'Failed to load Train/Validation Data',
+                   'Failed to transform Train/Validation Data',
+                  'Failed to Generate Train/Validation Features',
+                  'Failed to Train w/ Tree-Based Models:',
+                  'Failed to Train w/ Linear Models : Logistic Regression',
+                   'Table Insertion Failed'
+                 ]
+# Start Logging
+log = pd.DataFrame(columns=['Name','ID','Type','Value','Step','TimeStamp'])
 current_dateTime = datetime.now()
-Step = Step +  1
-Activity = 'Define Macros'
-print(Activity, current_dateTime)
-log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step ,datetime.now()] 
+print('Start ', current_dateTime)
+
+Step = Step + 1
+Activity = 'Start'
+log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step,datetime.now()] 
 
 
-
-
-# <h3>Load Data</h3>
-
-# In[12]:
-
-
-#member_analysis_claim_df = pd.read_pickle('./utilities/member_analysis_claim_df.pickle')
-#member_analysis_summary_df = pd.read_pickle('./utilities/member_analysis_summary_df.pickle')
-
-
-# In[ ]:
-
-
-
-
-
-# In[13]:
 
 
 REINFECTION_PARAMS = {
@@ -1006,11 +915,12 @@ REINFECTION_PARAMS = {
                 "results_loc": "./utilities/RiskScore_ReinfectionRisk_Results.csv",
                 "log_table_insert_statement": "INSERT INTO [Log].[dbo].[log] VALUES (?,?,?,?,?,?)",
                 "scoring_table_insert_statement": "INSERT INTO [Log].[dbo].[scoring] VALUES (?,?,?,?,?)",
-                "error_table_insert_statement": "INSERT INTO [Log].[dbo].[error] VALUES (?,?,?,?,?,?)"
+                "error_table_insert_statement": "INSERT INTO [Log].[dbo].[error] VALUES (?,?,?,?,?,?)",
+                "connection_string" : ""
                 }
 
 
-# In[14]:
+
 
 
 try:
@@ -1028,6 +938,7 @@ try:
     LOG_TABLE_INSERT_STATEMENT = REINFECTION_PARAMS['log_table_insert_statement']
     SCORING_TABLE_INSERT_STATEMENT = REINFECTION_PARAMS['scoring_table_insert_statement']
     ERROR_TABLE_INSERT_STATEMENT = REINFECTION_PARAMS['error_table_insert_statement']
+    CONNECTION_STRING = REINFECTION_PARAMS['connection_string']
     
     print(Activity, current_dateTime)
     log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step,datetime.now()] 
@@ -1038,7 +949,7 @@ try:
     Activity = 'Connection Established'
     Step = Step + 1
 
-    cnxn = pyodbc.connect(CONNECTION_STRING2
+    cnxn = pyodbc.connect(CONNECTION_STRING
                          )
     print(Activity, current_dateTime)
     log.loc[len(log.index)] = [Name, ID, Activity,datetime.now(), Step, datetime.now()]
@@ -1046,9 +957,8 @@ try:
     ###############################################
     current_dateTime = datetime.now()
     Step = Step +  1
-    member_analysis_claim_df,member_analysis_summary_df = load_data()
-    #member_analysis_claim_df = pd.read_pickle('./utilities/member_analysis_claim_df.pickle')
-    #member_analysis_summary_df = pd.read_pickle('./utilities/member_analysis_summary_df.pickle')
+    member_analysis_claim_df,member_analysis_summary_df = load_data(CONNECTION_STRING)
+    
     
     TRAIN_DATA = member_analysis_claim_df[member_analysis_claim_df['ServiceYear'].isin([2017,2018, 2019, 2020])]
     training_data_df = dq_training_dataset(TRAIN_DATA)
@@ -1132,7 +1042,7 @@ try:
     #cross_validation_on_models(training_X, trainY, xgb, fold = 5)
     print('===========Train with XGBoost====== ')
     xgb.fit(training_X, trainY)
-    #feature_importance(xgb, trainingX)
+    feature_importance(xgb, trainingX)
     evaluate_on_validation(xgb, test_X, testY)
     
     xgb_prediction = xgb.predict(test_X)
@@ -1179,7 +1089,7 @@ try:
                             iterations=10,
                             )
     cat_classifier.fit(training_X, trainY)
-    #feature_importance(cat_classifier, trainingX)
+    feature_importance(cat_classifier, trainingX)
     evaluate_on_validation(cat_classifier, test_X, testY)
     
     
